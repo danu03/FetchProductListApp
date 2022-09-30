@@ -20,9 +20,9 @@ class MainViewModel @Inject constructor(
     val dataState: LiveData<DataState<List<Product>>>
         get() = _dataState
 
-    fun getProduct() {
+    fun getProduct(limit: Int) {
         viewModelScope.launch {
-            repository.getProduct()
+            repository.getProduct(limit)
                 .onEach { dataState ->
                     _dataState.value = dataState
                 }

@@ -14,10 +14,10 @@ constructor(
     private val networkMapper: NetworkMapper
 ){
 
-    suspend fun getProduct(): Flow<DataState<List<Product>>> = flow {
+    suspend fun getProduct(limit: Int): Flow<DataState<List<Product>>> = flow {
         emit(DataState.Loading)
         try {
-            val networkProduct = retrofit.getProductList()
+            val networkProduct = retrofit.getProductList(limit)
             val products = networkMapper.mapFromEntityList(networkProduct)
             emit(DataState.Success(products))
         } catch (e: Exception) {

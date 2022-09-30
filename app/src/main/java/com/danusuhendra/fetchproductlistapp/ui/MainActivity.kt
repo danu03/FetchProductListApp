@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.danusuhendra.fetchproductlistapp.adapter.ProductAdapter
 import com.danusuhendra.fetchproductlistapp.databinding.ActivityMainBinding
 import com.danusuhendra.fetchproductlistapp.model.Product
@@ -21,6 +22,11 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var layoutManager: LinearLayoutManager
 
+    private var loading: Boolean = true
+    private var totalItemCount = 0
+    private var pastVisibleItems = 0
+    private var limit = 4
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -28,11 +34,21 @@ class MainActivity : AppCompatActivity() {
 
         layoutManager = LinearLayoutManager(this)
         setUpRecyclerView()
+        binding.rvProduct.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                totalItemCount = layoutManager.itemCount
+                pastVisibleItems = layoutManager.findLastVisibleItemPosition()
+                if (!loading && totalItemCount == pastVisibleItems + 1) {
+                    viewModel.getProduct(limit++)
+                }
+            }
+        })
 
-        viewModel.getProduct()
+        viewModel.getProduct(limit)
 
         viewModel.dataState.observe(this) { dataState ->
-            when(dataState) {
+            when (dataState) {
                 is DataState.Success<List<Product>> -> {
                     displayLoading(false)
                     appendProduct(dataState.data)
@@ -64,7 +80,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun displayLoading(loading: Boolean) {
-        binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+        if (loading) {
+            this.loading = true
+            binding.progressBar.visibility = View.VISIBLE
+        } else {
+            this.loading = false
+            binding.progressBar.visibility = View.GONE
+        }
     }
 
     private fun appendProduct(product: List<Product>) {
